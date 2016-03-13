@@ -1,0 +1,3 @@
+<?php
+
+module_load_include('inc', 'frontmap', '/includes/frontmap.openlayers');

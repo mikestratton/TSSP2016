@@ -1,0 +1,203 @@
+<?php
+
+/**
+ * @file
+ * Cartaro install file.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function cartaro_install() {
+
+  theme_enable(array('seven', 'frontmap'));
+  theme_disable(array('bartik'));
+
+   // Grant "View published content" permisson to anonymous user.
+  user_role_grant_permissions(1, array('access content'));
+
+  $variables = array(
+    'admin_theme' => 'seven',
+    'theme_default' => 'frontmap',
+    'node_admin_theme' => 1,
+    'openlayers_source_type' => 'internal',
+    'openlayers_ui_version_check' => 'Release 2.12',
+  );
+  foreach ($variables as $key => $variable) {
+    variable_set($key, $variable);
+  }
+
+  menu_save(array(
+    'menu_name' => 'cartaro-administration',
+    'title' => 'Cartaro Administration',
+    'description' => '',
+  ));
+
+  // Add Log in and Documentation links to User menu.
+  $menu_links = array(
+    array(
+      'link_path' => 'user/login',
+      'link_title' => 'Log in',
+      'menu_name' => 'user-menu',
+    ),
+    array(
+      'link_path' => 'http://cartaro.org/documentation',
+      'link_title' => 'Documentation',
+      'menu_name' => 'user-menu',
+    ),
+    // Cartaro Administration menu
+    array(
+      'link_path' => 'http://cartaro.org/documentation',
+      'link_title' => 'Documentation',
+      'weight' => -50,
+      'menu_name' => 'cartaro-administration',
+    ),
+    array(
+      'link_path' => 'admin/structure/types',
+      'link_title' => 'Content types',
+      'expanded' => TRUE,
+      'menu_name' => 'cartaro-administration',
+      'menu_links' => array(
+        array(
+          'link_path' => 'admin/structure/types/add',
+          'link_title' => 'Add new content type',
+          'menu_name' => 'cartaro-administration',
+        ),
+      ),
+    ),
+    array(
+      'link_path' => 'admin/structure/geoserver',
+      'link_title' => 'GeoServer',
+      'expanded' => TRUE,
+      'menu_name' => 'cartaro-administration',
+      'menu_links' => array(
+        array(
+          'link_path' => 'admin/structure/geoserver/layers',
+          'link_title' => 'Layers',
+          'expanded' => TRUE,
+          'menu_name' => 'cartaro-administration',
+          'menu_links' => array(
+            array(
+              'link_path' => 'admin/structure/geoserver/layers/add',
+              'link_title' => 'Add new layer',
+              'menu_name' => 'cartaro-administration',
+            ),
+          ),
+        ),
+        array(
+          'link_path' => 'admin/structure/geoserver/styles',
+          'link_title' => 'Styles',
+          'expanded' => TRUE,
+          'menu_name' => 'cartaro-administration',
+          'menu_links' => array(
+            array(
+              'link_path' => 'admin/structure/geoserver/styles/add',
+              'link_title' => 'Add new style',
+              'menu_name' => 'cartaro-administration',
+            ),
+          ),
+        ),
+      ),
+    ),
+    array(
+      'link_path' => 'admin/structure/openlayers',
+      'link_title' => 'OpenLayers',
+      'expanded' => TRUE,
+      'menu_name' => 'cartaro-administration',
+      'menu_links' => array(
+        array(
+          'link_path' => 'admin/structure/openlayers/layers',
+          'link_title' => 'Layers',
+          'expanded' => TRUE,
+          'menu_name' => 'cartaro-administration',
+          'menu_links' => array(
+            array(
+              'link_path' => 'admin/structure/openlayers/layers/assistant',
+              'link_title' => 'Add new layer',
+              'menu_name' => 'cartaro-administration',
+            ),
+          ),
+        ),
+        array(
+          'link_path' => 'admin/structure/openlayers/maps',
+          'link_title' => 'Maps',
+          'expanded' => TRUE,
+          'menu_name' => 'cartaro-administration',
+          'menu_links' => array(
+            array(
+              'link_path' => 'admin/structure/openlayers/maps/add',
+              'link_title' => 'Add new map',
+              'menu_name' => 'cartaro-administration',
+            ),
+          ),
+        ),
+        array(
+          'link_path' => 'admin/structure/openlayers/styles',
+          'link_title' => 'Styles',
+          'expanded' => TRUE,
+          'menu_name' => 'cartaro-administration',
+          'menu_links' => array(
+            array(
+              'link_path' => 'admin/structure/openlayers/styles/add',
+              'link_title' => 'Add new style',
+              'menu_name' => 'cartaro-administration',
+            ),
+          ),
+        ),
+      ),
+    ),
+    array(
+      'link_path' => 'admin/structure/views',
+      'link_title' => 'Views',
+      'expanded' => TRUE,
+      'menu_name' => 'cartaro-administration',
+      'menu_links' => array(
+        array(
+          'link_path' => 'admin/structure/views/add',
+          'link_title' => 'Add new view',
+          'menu_name' => 'cartaro-administration',
+        ),
+      ),
+    ),
+  );
+  cartaro_menu_link_save($menu_links);
+}
+
+function cartaro_menu_link_save($menu_links) {
+  foreach ($menu_links as $menu_link) {
+    $mlid = menu_link_save($menu_link);
+
+    if (isset($menu_link['menu_links'])) {
+      foreach ($menu_link['menu_links'] as &$child_link) {
+        $child_link['plid'] = $mlid;
+      }
+      cartaro_menu_link_save($menu_link['menu_links']);
+    }
+  }
+}
+
+/**
+ * Enable Diff module.
+ */
+function cartaro_update_7100() {
+  $module_list = array('diff');
+  module_enable($module_list);
+}
+
+/**
+ * Enable GDAL, Libraries, Module Filter, Proj4JS and Strongarm modules.
+ */
+function cartaro_update_7101() {
+  module_enable(array('gdal', 'libraries', 'module_filter', 'proj4js', 'strongarm'));
+}
+
+/**
+ * Update OpenLayers source variable to use internal type.
+ */
+function cartaro_update_7102() {
+  $source = variable_get('openlayers_source');
+  if ($source === 'profiles/cartaro/libraries/openlayers/OpenLayers.js') {
+    variable_set('openlayers_source_type', 'internal');
+  }
+  variable_del('openlayers_source');
+}
