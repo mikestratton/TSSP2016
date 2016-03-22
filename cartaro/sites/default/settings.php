@@ -212,21 +212,7 @@
  *   );
  * @endcode
  */
-$databases = array (
-  'default' => 
-  array (
-    'default' => 
-    array (
-      'database' => 'TSSP2016_DB',
-      'username' => 'TSSP2016',
-      'password' => 'mM1@!!@23',
-      'host' => 'localhost',
-      'port' => '',
-      'driver' => 'pgsql',
-      'prefix' => '',
-    ),
-  ),
-);
+$databases = array();
 
 /**
  * Access control for update.php script.
@@ -258,7 +244,7 @@ $update_free_access = FALSE;
  *   $drupal_hash_salt = file_get_contents('/home/example/salt.txt');
  *
  */
-$drupal_hash_salt = 'TUC2u0zJ0jRLgHK-JI0qrVJ22c7NtMVEOmIOitYY1GU';
+$drupal_hash_salt = '';
 
 /**
  * Base URL (optional).
