@@ -1,0 +1,14 @@
+; Necessary directives:
+name = "Template"
+description = "Template used to create necessary files for module development."
+core = "7.x"
+version = "7.x-0.1-dev"
+; common naming conventions: dev alpha beta rc
+
+; Sample directives:
+;package = some_package
+;files[] = folder/file1.inc
+;files[] = folder/file2.inc
+;dependencies[] = some_dependency
+
+

@@ -1,0 +1,18 @@
+<?php
+/**
+ * @file
+ * Template containing necessary files for module development.
+ */
+ /**
+  * Implements hook_help().
+  */
+  function template_help($path, $arg){
+      switch($path) {
+          case 'admin/help#template':{
+              $ret_val = '<h3>' . t('About') . '</h3>';
+              $ret_val .= '<p>' . t('The Template module contains all the necessary files needed for module development.') . '</p>';
+              return $ret_val;
+              break;
+          }
+      }
+  }
