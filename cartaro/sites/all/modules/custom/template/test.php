@@ -89,7 +89,7 @@
           '#description' => t('Signed degrees format DDD.dddd'),
           '#type' => 'textfield',
           '#default_value' => 41.0997803,
-          '#required' => TRUE,
+          'required' => TRUE,
       );
       
       $form['default_center']['template_default_center_long'] = array(
@@ -97,7 +97,7 @@
           '#description' => t('Signed degrees format DDD.dddd'),
           '#type' => 'textfield',
           '#default_value' => -80.64951940000003, 
-          '#required' => TRUE,
+          'required' => TRUE,
       );
       
       $options = range(0,20, 1);
