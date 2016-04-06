@@ -75,19 +75,14 @@
  					'max_length' => 60,
  			),
  	);
- 	
-
- 	// Rebuild field cache.
- 	// Reference: http://bit.ly/1RVEiba
- 	if (!field_info_field('template_unit_count')) {
- 		field_info_cache_clear();
- 	}
- 	
+ 	 		
  	foreach ($fields as $field) {
+ 		// Rebuild field cache.
+ 		// Reference: http://bit.ly/1RVEiba
+ 		field_info_cache_clear();
+ 		
  		field_create_field($field);
  	}
- 	
- 	
  	
  	// Create field instances.
  	$instances = array();
