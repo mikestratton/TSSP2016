@@ -42,10 +42,6 @@
  	// Create fields.
  	$fields = array();
  	
- 	// Rebuild field cache.
- 	// Reference: http://bit.ly/1RVEiba
- 	field_info_cache_clear();
- 	
  	$fields['template_unit_count'] = array(
  			'field_name' => 'template_unit_count',
  			'type' => 'number_integer',
@@ -81,6 +77,10 @@
  	);
  	 		
  	foreach ($fields as $field) {
+ 		// Rebuild field cache.
+ 		// Reference: http://bit.ly/1RVEiba
+ 		field_info_cache_clear();
+ 		
  		field_create_field($field);
  	}
  	
