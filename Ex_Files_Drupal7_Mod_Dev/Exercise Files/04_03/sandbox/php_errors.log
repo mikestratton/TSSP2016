@@ -1,2 +1,0 @@
-[05-Sep-2012 18:20:36 UTC] PHP Fatal error:  Call to undefined function gmap3_tools_add_map() in /media/sf_sandbox/sites/all/modules/custom/windfarms/windfarms.module on line 342
-[05-Sep-2012 18:41:45 UTC] PHP Fatal error:  Call to undefined function gmap_tools_add_map() in /media/sf_sandbox/sites/all/modules/custom/windfarms/windfarms.module on line 342
