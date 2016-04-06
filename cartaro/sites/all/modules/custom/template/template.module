@@ -15,4 +15,143 @@
               break;
           }
       }
+<<<<<<< HEAD
   }
+=======
+  }
+  
+ /**
+  * Implements hook_permission().
+  */
+  function template_permission(){
+      return array(
+          'administer template' => array(
+              'title' => t('Administer Template'),
+              'description' => t('Perform administrative tasks on Template functionality'),
+          ),
+      );
+  }
+  
+ /**
+  * Implements hook_menu().
+  */
+  function template_menu(){
+      $items = array();
+      
+      // Admin configuration group.
+      $items['admin/config/template'] = array(
+          'title' => 'Template',
+          'description' => 'Administer Template',
+          'access arguments' => array('administer template'),
+      );
+      
+      // Admin configuration - Settings.
+      $items['admin/config/template/manage'] = array(
+          'title' => 'Template settings',
+          'description' => 'Manage Template settings and configurations.',
+          'access arguments' => array('administer template'),
+          'page callback' => 'drupal_get_form',
+          'page arguments' => array('template_admin_settings_form'),
+      );
+      
+      return $items;
+  }
+  
+ /**
+  * Implements hook_form().
+  */
+  function template_admin_settings_form($node, &$form_state){
+      $form = array();
+      
+      $form['overview'] = array(
+          '#markup' => t('This interface allows administrators to manage 
+              general Template Settings'),
+          '#prefix' => '<p>',
+          '#suffix' => '</p>',
+      );
+      
+      $form['template_gmap'] = array(
+          '#title' => t('Enable Google Maps'),
+          '#description' => t('When enabled, Google Maps will be rendered 
+              if latitude and longitude are known'),
+          '#type' => 'checkbox',
+          '#default_value' => variable_get('template_gmap'),
+      );
+      
+      $form['default_center'] = array(
+          '#title' => t('Map Center'),
+          '#description' => t('Location of the center of the map of Template'),
+          '#type' => 'fieldset',
+          '#collapsible' => TRUE,
+          '#collapsed' => FALSE,
+      );
+      
+      $form['default_center']['template_default_center_lat'] = array(
+          '#title' => t('Latitude'),
+          '#description' => t('Signed degrees format DDD.dddd'),
+          '#type' => 'textfield',
+          '#default_value' => variable_get('template_default_center_lat'),
+          '#required' => TRUE,
+      );
+      
+      $form['default_center']['template_default_center_long'] = array(
+          '#title' => t('Longitude'),
+          '#description' => t('Signed degrees format DDD.dddd'),
+          '#type' => 'textfield',
+          '#default_value' => variable_get('template_default_center_long'), 
+          '#required' => TRUE,
+      );
+      
+      $options = range(0,20, 1);
+      $options[0] = t('0 - Furthest');
+      $options[20] = t('20 - Closest');
+      
+      $form['template_default_gmap_zoom'] = array(
+          '#title' => t('Google Map zoom'),
+          '#description' => t('Default level of zoom, between 0 and 20.'),
+          '#type' => 'select',
+          '#options' => $options,
+          '#default_value' => variable_get('template_default_gmap_zoom'),
+          '#required' => TRUE,
+      );
+            
+      return system_settings_form($form);
+  }
+  
+ /**
+  * Validates Template admin settings.
+  */
+  function template_admin_settings_form_validate($form, &$form_state) {
+    
+    // dpm($form_state['values']); // devel module debugging code
+     
+     // Regular expression for validating signed degrees.
+     $signed_degree_regex = '/^[+_]?\d+(\.\d+)?$/';
+     
+     // Shorthand for long array names.
+     $lat = $form_state['values']['template_default_center_lat'];
+     $long = $form_state['values']['template_default_center_long'];
+     
+     // Validate latitude and longitude format.
+     if (!preg_match($signed_degree_regex, $lat)) {
+         form_set_error('template_default_center_lat', t('Invalid latitude; 
+             must be a sined degree (DDD.dddd).'));
+     }
+     if (!preg_match($signed_degree_regex, $long)) {
+         form_set_error('template_default_center_long', t('Invalid longitude; 
+             must be a sined degree (DDD.dddd).'));
+     }
+     
+     // Validate latitude and longitude values.
+     if (!((-180 <= $lat) && ($lat <= 180))) {
+         form_set_error('template_default_center_lat', t('Latitude must be between 
+             -180 and 180'));
+     }
+     if (!((-180 <= $long) && ($long <= 180))) {
+         form_set_error('template_default_center_long', t('Longitude must be between 
+             -180 and 180'));
+     }
+  }
+  
+ 
+>>>>>>> 654e7c36e5a475ab5734ba24076964b0fb46c390
