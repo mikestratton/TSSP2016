@@ -151,4 +151,342 @@
      }
   }
   
- 
+ /**
+ * Implements hook_form_alter().
+ */
+function template_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'template_node_form':{
+      $form['#validate'][] = 'template_template_node_form_validate';
+      break;
+    }
+  }
+}
+
+/**
+ * Validates Wind Farm content type.
+ */
+function template_template_node_form_validate($form, &$form_state) {
+  // Validate Unit Count.
+  $value = $form_state['values']['template_unit_count'][LANGUAGE_NONE][0]['value'];
+
+  if ($value !== '' && (!is_numeric($value) || intval($value) != $value || $value <= 0)) {
+    form_set_error('template_unit_count', t('The number of units on a wind farm must be a positive whole number.'));
+  }
+
+  // Validate latitude.
+  $lat = $form_state['values']['template_latitude'][LANGUAGE_NONE][0]['value'];
+  if (!_template_validate_geo_coord_range($lat) || !_template_validate_signed_degrees($lat)) {
+    form_set_error('template_latitude', t('Latitude must be valid coordinates in signed degrees.'));
+  }
+
+  // Validate longitude.
+  $long = $form_state['values']['template_longitude'][LANGUAGE_NONE][0]['value'];
+  if (!_template_validate_geo_coord_range($long) || !_template_validate_signed_degrees($long)) {
+    form_set_error('template_longitude', t('Longitude must be valid coordinates in signed degrees.'));
+  }
+}
+
+/**
+ * Determine if a value is in signed degrees format.
+ *
+ * @param string $value
+ *   The value to be tested.
+ *
+ * @return boolean
+ *   TRUE if correctly formatted.
+ */
+function _template_validate_signed_degrees($value) {
+  $signed_degree_regex = '/^[+-]?\d+(\.\d+)?$/';
+  return preg_match($signed_degree_regex, $value) ? TRUE : FALSE;
+}
+
+/**
+ * Determine if a geographic coordinate is within the valid range.
+ *
+ * @param string $value
+ *   The value to be tested.
+ *
+ * @return boolean
+ *   TRUE if between -180 and 180.
+ */
+function _template_validate_geo_coord_range($value) {
+  return ((-180 <= $value) && ($value <= 180));
+}
+
+/**
+ * Implements hook_feeds_importer_default().
+ */
+function template_feeds_importer_default() {
+  $export = array();
+
+  $feeds_importer = new stdClass();
+  $feeds_importer->disabled = FALSE;
+  $feeds_importer->api_version = 1;
+  $feeds_importer->id = 'openei_wind_farms';
+  $feeds_importer->config = array(
+    'name' => 'OpenEI Wind Farms',
+    'description' => 'CSV Import of OpenEI Wind Farm Database',
+    'fetcher' => array(
+      'plugin_key' => 'FeedsFileFetcher',
+      'config' => array(
+        'allowed_extensions' => 'txt csv tsv xml opml',
+        'direct' => FALSE,
+      ),
+    ),
+    'parser' => array(
+      'plugin_key' => 'FeedsCSVParser',
+      'config' => array(
+        'delimiter' => ',',
+        'no_headers' => 0,
+      ),
+    ),
+    'processor' => array(
+      'plugin_key' => 'FeedsNodeProcessor',
+      'config' => array(
+        'content_type' => 'template',
+        'expire' => '-1',
+        'author' => 0,
+        'mappings' => array(
+          0 => array(
+            'source' => 'Facility Name',
+            'target' => 'title',
+            'unique' => 0,
+          ),
+          1 => array(
+            'source' => 'Facility',
+            'target' => 'body',
+            'unique' => FALSE,
+          ),
+          2 => array(
+            'source' => 'NumberOfUnits',
+            'target' => 'template_unit_count',
+            'unique' => FALSE,
+          ),
+          3 => array(
+            'source' => 'Latitude',
+            'target' => 'template_latitude',
+            'unique' => FALSE,
+          ),
+          4 => array(
+            'source' => 'Longitude',
+            'target' => 'template_longitude',
+            'unique' => FALSE,
+          ),
+          5 => array(
+            'source' => 'WindTurbineManufacturer',
+            'target' => 'template_turbine_manufacturer',
+            'unique' => FALSE,
+          ),
+        ),
+        'update_existing' => '0',
+        'input_format' => 'plain_text',
+      ),
+    ),
+    'content_type' => '',
+    'update' => 0,
+    'import_period' => '-1',
+    'expire_period' => 3600,
+    'import_on_create' => 1,
+    'process_in_background' => 0,
+  );
+
+  $export['openei_wind_farms'] = $feeds_importer;
+  return $export;
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function template_ctools_plugin_api($module = '', $api = '') {
+  if ($module == 'feeds' && $api == 'feeds_importer_default') {
+    return array('version' => 1);
+  }
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function template_node_view($node, $view_mode, $langcode) {
+  if ($node->type == 'template' && $view_mode == 'full') {
+    $node->content['template_gmap'] = array(
+      '#markup' => theme('template_gmap', array(
+        'node' => $node,
+      )),
+      '#weight' => 100,
+    );
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function template_theme($existing, $type, $theme, $path) {
+  return array(
+    'template_gmap' => array(
+      'variables' => array('node' => NULL),
+    ),
+  );
+}
+
+/**
+ * Wind Farm Google Map theme function.
+ */
+function theme_template_gmap($variables) {
+  // Check to see if the Google Map is enabled.
+  if (!variable_get('template_gmap')) {
+    return;
+  }
+
+  $lat = $variables['node']->template_latitude[LANGUAGE_NONE][0]['value'];
+  $long = $variables['node']->template_longitude[LANGUAGE_NONE][0]['value'];
+
+  // Cannot render map without both a latitude and longitude.
+  if (($lat == '') || ($long == '')) {
+    return;
+  }
+
+  module_load_include('inc', 'gmap3_tools');
+
+  $facility_name = check_plain($variables['node']->title);
+  $description = check_plain($variables['node']->body[LANGUAGE_NONE][0]['value']);
+  gmap3_tools_add_map(array(
+    'mapId' => 'gmap-canvas-' . $variables['node']->nid,
+    'mapOptions' => array(
+      'zoom' => (int) variable_get('template_default_gmap_zoom'),
+      'mapTypeId' => GMAP3_TOOLS_MAP_TYPE_ID_SATELLITE,
+    ),
+    'markers' => array(
+      gmap3_tools_create_marker($lat, $long, $facility_name, $description),
+    ),
+    'gmap3ToolsOptions' => array(
+      'defaultMarkersPosition' => GMAP3_TOOLS_DEFAULT_MARKERS_POSITION_CENTER,
+    ),
+  ));
+
+  $output = '<div id="gmap-canvas-' . $variables['node']->nid . '" style="width:500px;height:400px;"></div>';
+  return $output;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function template_block_info() {
+  $blocks = array();
+
+  $blocks['gmap'] = array(
+    'info' => t('Wind Farm Map'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function template_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'gmap':{
+      $block['subject'] = t('Wind Farm Map');
+      $block['content'] = template_block_contents($delta);
+      break;
+    }
+  }
+
+  return $block;
+}
+
+/**
+ * Wind Farm Block contents.
+ *
+ * @param string $delta
+ *   The block ID.
+ *
+ * @return string
+ *   HTML output.
+ */
+function template_block_contents($delta) {
+  $output = '';
+  switch ($delta) {
+    case 'gmap':{
+      module_load_include('inc', 'location', 'earth');
+
+      // 100 miles.
+      $distance_meters = 100 * 1609.34;
+
+      // Determine the range of lat and long from the default center.
+      $lat = variable_get('template_default_center_lat');
+      $long = variable_get('template_default_center_long');
+
+      $range_lat = earth_latitude_range($long, $lat, $distance_meters);
+      $range_long = earth_longitude_range($long, $lat, $distance_meters);
+
+      // Build query.
+      $query = new EntityFieldQuery();
+
+      // Only show nodes.
+      $query->entityCondition('entity_type', 'node');
+
+      // Only show template.
+      $query->entityCondition('bundle', 'template');
+
+      // Only show latitude between range.
+      $query->fieldCondition('template_latitude', 'value', $range_lat, 'BETWEEN');
+
+      // Only show longitude between range.
+      $query->fieldCondition('template_longitude', 'value', $range_long, 'BETWEEN');
+
+      // Execute query.
+      $result = $query->execute();
+
+      // No results.
+      if (!isset($result['node'])) {
+        return '';
+      }
+
+      $nodes = node_load_multiple(array_keys($result['node']));
+
+      module_load_include('inc', 'gmap3_tools');
+
+      $markers = array();
+
+      foreach ($nodes as $node) {
+        $lat = $node->template_latitude[LANGUAGE_NONE][0]['value'];
+        $long = $node->template_longitude[LANGUAGE_NONE][0]['value'];
+
+        // Cannot render map without both.
+        if (($lat == '') || ($long == '')) {
+          continue;
+        }
+
+        $facility_name = check_plain($node->title);
+        $description = check_plain($node->body[LANGUAGE_NONE][0]['value']);
+
+        // Add a link to the node.
+        $description .= ' ' . l(t('More info'), 'node/' . $node->nid);
+
+        // Add to markers.
+        $markers[] = gmap3_tools_create_marker($lat, $long, $facility_name, $description);
+      }
+
+      // Create map with all the markers.
+      gmap3_tools_add_map(array(
+        'mapId' => 'gmap-canvas-block',
+        'mapOptions' => array(
+          'mapTypeId' => GMAP3_TOOLS_MAP_TYPE_ID_SATELLITE,
+        ),
+        'markers' => $markers,
+        'gmap3ToolsOptions' => array(
+          'defaultMarkersPosition' => GMAP3_TOOLS_DEFAULT_MARKERS_POSITION_CENTER_ZOOM,
+        ),
+      ));
+
+      // HTML container for the map.
+      $output = '<div id="gmap-canvas-block" style="width:500px;height:400px;"></div>';
+      break;
+    }
+  }
+  return $output;
+}

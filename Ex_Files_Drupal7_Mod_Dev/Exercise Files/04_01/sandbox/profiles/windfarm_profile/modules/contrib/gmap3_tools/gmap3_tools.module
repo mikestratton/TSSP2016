@@ -1,0 +1,51 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function gmap3_tools_menu() {
+  $items = array();
+
+  $items['gmap3_tools/example'] = array(
+    'title' => 'Gmap3 Tools examples',
+    'page callback' => 'gmap3_tools_example',
+    'page arguments' => array(2, 3),
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Example callback.
+ */
+function gmap3_tools_example() {
+  // You need to include gmap3_tools.inc file first in order to use it.
+  module_load_include('inc', 'gmap3_tools');
+
+  // Default map example.
+  gmap3_tools_add_map(array('mapId' => 'map-canvas-01'));
+  $output = t('Map example 01 (default map):') . '<div id="map-canvas-01" style="width:400px; height:300px"></div>';
+
+  $output .= '<br/>';
+
+  // Map example with some custom options and 2 markers.
+  gmap3_tools_add_map(array(
+    'mapId' => 'map-canvas-02',
+    'mapOptions' => array(
+      'centerX' => -34.397,
+      'centerY' => 150.644,
+      'zoom' => 8,
+    ),
+    'markers' => array(
+      gmap3_tools_create_marker(-35, 150, 'Marker with info window', 'Marker info window content.'),
+      gmap3_tools_create_marker(-35, 150.5, 'Marker without info window'),
+    ),
+    'gmap3ToolsOptions' => array(
+      'defaultMarkersPosition' => GMAP3_TOOLS_DEFAULT_MARKERS_POSITION_CENTER,
+    ),
+  ));
+  $output .= t('Map example 02 with custom markers:') . '<div id="map-canvas-02" style="width:500px; height:400px"></div>';
+
+  return $output;
+}

@@ -1,0 +1,12 @@
+name = Coder Review Test
+package = Coder
+core = 7.x
+hidden = TRUE
+files[] = coder_review_test.module
+
+
+; Information added by drush on 2012-09-03
+version = ""
+project = "coder"
+datestamp = "1346719664"
+
