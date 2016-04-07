@@ -77,10 +77,6 @@ function windfarms_install() {
   );
 
   foreach ($fields as $field) {
-	// Rebuild field cache.
-	// Reference: http://bit.ly/1RVEiba
- 	field_info_cache_clear();
-	
     field_create_field($field);
   }
 

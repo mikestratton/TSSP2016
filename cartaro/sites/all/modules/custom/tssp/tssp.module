@@ -1,0 +1,56 @@
+<?php
+/**
+ * @file
+ * Module created to meet specific use cases in the development of TSSP2016.
+ */
+
+/**
+ * Implements hook_help().
+ */
+function tssp_help($path, $arg){
+	switch($path) {
+		case 'admin/help#tssp':{
+			$ret_val = '<h3>' . t('About') . '</h3>';
+			$ret_val .= '<p>' . t('Module created to meet specific use cases in the development of TSSP2016.') . '</p>';
+			return $ret_val;
+			break;
+		}
+	}
+}
+
+/**
+ * Implements hook_permission().
+ */
+function tssp_permission(){
+	return array(
+			'administer tssp' => array(
+					'title' => t('Administer TSSP'),
+					'description' => t('Perform administrative tasks on TSSP functionality'),
+			),
+	);
+}
+
+/**
+ * Implements hook_menu().
+ */
+function tssp_menu(){
+	$items = array();
+
+	// Admin configuration group.
+	$items['admin/config/tssp'] = array(
+			'title' => 'TSSO',
+			'description' => 'Administer TSSP',
+			'access arguments' => array('administer tssp'),
+	);
+
+	// Admin configuration - Settings.
+	$items['admin/config/tssp/manage'] = array(
+			'title' => 'TSSP settings',
+			'description' => 'Manage TSSP settings and configurations.',
+			'access arguments' => array('administer tssp'),
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('tssp_admin_settings_form'),
+	);
+
+	return $items;
+}

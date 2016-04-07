@@ -1,0 +1,9 @@
+; Necessary directives:
+name = "Template"
+description = "Template used to create necessary files for module development."
+core = "7.x"
+
+; version: common naming conventions: dev alpha beta rc
+version = "7.x-0.1-dev"
+
+configure = admin/config/tssp/manage
